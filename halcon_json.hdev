@@ -1,0 +1,524 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.1" halcon_version="12.0">
+<procedure name="main">
+<interface/>
+<body>
+<c>** HALCON JSON PARSER</c>
+<c>*** 1. 暂不出支持json格式中的数组 ***</c>
+<c>*** 2. 中文有乱码 ***</c>
+<c></c>
+<l>FileName := './data.json'</l>
+<l>read_json_file (FileName, JsonString)</l>
+<c></c>
+<l>json_parse (JsonString, Keys, Values)</l>
+<c></c>
+<c></c>
+<l>Key := 'Camera'</l>
+<c>** get VALUE by KEY </c>
+<l>get_j_value (Keys, Values, Key, Key1, Value1)</l>
+<c></c>
+<c>** keys-values</c>
+<l>get_j_value (Key1, Value1, 'Input', k2, v2) </l>
+<c></c>
+<l>get_j_value (k2, v2, 'CameraName', k30, v30)</l>
+<c></c>
+<c>** key-value</c>
+<l>get_j_value (k30, v30, 'Dimension', k31, v31)</l>
+<c></c>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="skip_whitespace">
+<interface>
+<ic>
+<par name="CharStream" base_type="ctrl" dimension="0"/>
+<par name="IndexIn" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="IndexOut" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>while (true)</l>
+<l>   Char := CharStream[IndexIn]</l>
+<l>   if(Char == ' ' or Char == '\n' or Char == '\t' or Char == '\r')</l>
+<l>        IndexIn := IndexIn + 1</l>
+<l>        continue</l>
+<l>   endif</l>
+<l>   break</l>
+<l>endwhile</l>
+<l>IndexOut := IndexIn</l>
+<l>return ()</l>
+</body>
+<docu id="skip_whitespace">
+<parameters>
+<parameter id="CharStream"/>
+<parameter id="IndexIn"/>
+<parameter id="IndexOut"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="json_str_to_char_stream">
+<interface>
+<ic>
+<par name="JsonString" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="CharStream" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>tuple_strlen (JsonString, Length)</l>
+<l>tuple_gen_sequence (0,Length-1,1,Sequence)</l>
+<l>tuple_substr (JsonString, Sequence, Sequence, CharStream)</l>
+<l>return ()</l>
+</body>
+<docu id="json_str_to_char_stream">
+<parameters>
+<parameter id="CharStream"/>
+<parameter id="JsonString"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="j_parse_string">
+<interface>
+<ic>
+<par name="JsonString" base_type="ctrl" dimension="0"/>
+<par name="CharStream" base_type="ctrl" dimension="0"/>
+<par name="Index" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="StringValue" base_type="ctrl" dimension="0"/>
+<par name="IndexOut" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>Start := Index</l>
+<c></c>
+<c></c>
+<l>while (true)</l>
+<c>    ** 先跳过左引号</c>
+<l>    Index := Index + 1</l>
+<c>    </c>
+<l>    Char := CharStream[Index]</l>
+<l>    if(Char == '"')</l>
+<c>        ** 右引号字符结束</c>
+<l>        break</l>
+<l>    elseif(Char == '\\')</l>
+<c>        ** 处理字符流中的转义字符</c>
+<l>        Index := Index + 1</l>
+<l>    elseif(Char == '}')</l>
+<l>        break</l>
+<l>    endif</l>
+<l>endwhile</l>
+<c></c>
+<l>End := Index</l>
+<l>tuple_substr (JsonString, Start+1, End-1, StringValue)</l>
+<l>IndexOut := Index+1</l>
+<l>return ()</l>
+</body>
+<docu id="j_parse_string">
+<parameters>
+<parameter id="CharStream"/>
+<parameter id="Index"/>
+<parameter id="IndexOut"/>
+<parameter id="JsonString"/>
+<parameter id="StringValue"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="test_number_char_head">
+<interface>
+<ic>
+<par name="Char" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="IsNumberChar" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>NumChar := ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-']</l>
+<l>tuple_find (NumChar, Char, Index)</l>
+<l>if(Index != -1)</l>
+<l>    IsNumberChar := true</l>
+<l>else</l>
+<l>    IsNumberChar := false</l>
+<l>endif</l>
+<l>return ()</l>
+</body>
+<docu id="test_number_char_head">
+<parameters>
+<parameter id="Char"/>
+<parameter id="IsNumberChar"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="test_number_char_tail">
+<interface>
+<ic>
+<par name="Char" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="IsNumberCharTail" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>NumCharTail := ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '+', '.', 'e', 'E']</l>
+<l>tuple_find (NumCharTail, Char, Index)</l>
+<l>if(Index != -1)</l>
+<l>    IsNumberCharTail := true</l>
+<l>else</l>
+<l>    IsNumberCharTail := false</l>
+<l>endif</l>
+<l>return ()</l>
+</body>
+<docu id="test_number_char_tail">
+<parameters>
+<parameter id="Char"/>
+<parameter id="IsNumberCharTail"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="j_parse_number">
+<interface>
+<ic>
+<par name="JsonString" base_type="ctrl" dimension="0"/>
+<par name="CharStream" base_type="ctrl" dimension="0"/>
+<par name="Index" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="NumberValue" base_type="ctrl" dimension="0"/>
+<par name="IndexOut" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>StartIndex := Index</l>
+<l>while (true)</l>
+<l>    Index := Index + 1</l>
+<c>    </c>
+<l>    test_number_char_tail (CharStream[Index], IsNumberCharTail)</l>
+<l>    if(IsNumberCharTail == 1)</l>
+<l>        continue</l>
+<l>    else</l>
+<l>        break</l>
+<l>    endif</l>
+<l>endwhile</l>
+<l>IndexOut := Index</l>
+<l>tuple_substr (JsonString, StartIndex, Index - 1, NumString)</l>
+<l>tuple_number (NumString, NumberValue)    </l>
+<l>return ()</l>
+</body>
+<docu id="j_parse_number">
+<parameters>
+<parameter id="CharStream"/>
+<parameter id="Index"/>
+<parameter id="IndexOut"/>
+<parameter id="JsonString"/>
+<parameter id="NumberValue"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="j_parse_key_values">
+<interface>
+<ic>
+<par name="JsonString" base_type="ctrl" dimension="0"/>
+<par name="CharStream" base_type="ctrl" dimension="0"/>
+<par name="IndexIn" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="Keys" base_type="ctrl" dimension="0"/>
+<par name="Values" base_type="ctrl" dimension="0"/>
+<par name="IndexOut" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>IndexOut1 := Index</l>
+<l>KeysOut := Keys</l>
+<l>Values := Values</l>
+<l>        IndexIn := IndexOut1</l>
+<c>        ** 解析Key</c>
+<l>        j_parse_string (JsonString, CharStream, IndexOut1, Key, IndexOut1)</l>
+<l>        KeysOut := [KeysOut, Key]</l>
+<c>        </c>
+<c>        ** 跳过空白和冒号</c>
+<l>        skip_whitespace (CharStream, IndexOut1, IndexOut1)</l>
+<l>        IndexOut1 := IndexOut1 + 1</l>
+<l>        skip_whitespace (CharStream, IndexOut1, IndexOut1)</l>
+<c>     </c>
+<c>        ** 此时Index指向Value的首个字符</c>
+<c>        ** 解析value</c>
+<l>        test_number_char_head (CharStream[IndexOut1], IsNumberChar)</l>
+<l>        if (CharStream[IndexOut1] == '"')</l>
+<c>            ** 字符串</c>
+<l>            j_parse_string (JsonString, CharStream, IndexOut1, Keys, IndexOut1)</l>
+<l>        elseif(IsNumberChar == 1)</l>
+<c>            ** 数字  </c>
+<l>            j_parse_number (JsonString, CharStream, IndexOut1, Keys, IndexOut1)</l>
+<l>        elseif (CharStream[IndexOut1] == '{')</l>
+<l>            stop()</l>
+<l>        endif</l>
+<l>        Values := [Values, Keys]</l>
+<c>      </c>
+<l>        IndexOut := IndexOut1</l>
+<l>return ()</l>
+</body>
+<docu id="j_parse_key_values">
+<parameters>
+<parameter id="CharStream"/>
+<parameter id="IndexIn"/>
+<parameter id="IndexOut"/>
+<parameter id="JsonString"/>
+<parameter id="Keys"/>
+<parameter id="Values"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="j_parse_values">
+<interface>
+<ic>
+<par name="JsonString" base_type="ctrl" dimension="0"/>
+<par name="CharStream" base_type="ctrl" dimension="0"/>
+<par name="Index" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="Value" base_type="ctrl" dimension="0"/>
+<par name="IndexOut" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<c>** 跳过空白</c>
+<l>skip_whitespace (CharStream, Index, Index)</l>
+<c>** 跳过冒号</c>
+<l>Index := Index + 1</l>
+<l>skip_whitespace (CharStream, Index, Index)</l>
+<c></c>
+<c>** 此时Index指向Value的首个字符</c>
+<c>** 解析value</c>
+<l>test_number_char_head (CharStream[Index], IsNumberChar)</l>
+<l>if (CharStream[Index] == '"')</l>
+<c>    ** 字符串</c>
+<l>    j_parse_string (JsonString, CharStream, Index, Value, Index)</l>
+<l>elseif(IsNumberChar == 1)</l>
+<c>    ** 数字  </c>
+<l>    j_parse_number (JsonString, CharStream, Index, Value, Index)</l>
+<l>elseif (CharStream[Index] == '{')</l>
+<c>    ** JsonObj</c>
+<l>    j_parse_obj (JsonString, CharStream, Index, Keys, Values, Index)</l>
+<l>    create_message (Value)</l>
+<l>    set_message_tuple (Value, 'Key', Keys)</l>
+<l>    set_message_tuple (Value, 'Value', Values)</l>
+<l>elseif (CharStream[Index] == 'f')</l>
+<c>    ** false</c>
+<l>    tuple_substr (JsonString, Index, Index + 4, Substring) </l>
+<l>    if(Substring == 'false')</l>
+<l>        Index := Index + 4 + 1</l>
+<l>        Value := 'false'</l>
+<l>    else</l>
+<l>        throw('Json 格式错误')</l>
+<l>    endif</l>
+<l>elseif (CharStream[Index] == 't')</l>
+<c>    ** true</c>
+<l>    tuple_substr (JsonString, Index, Index + 3, Substring)</l>
+<l>    if(Substring == 'true')</l>
+<l>        Index := Index + 3 + 1</l>
+<l>        Value := 'true'</l>
+<l>    else</l>
+<l>        throw('Json 格式错误')</l>
+<l>    endif</l>
+<l>elseif (CharStream[Index ]== 'n')</l>
+<c>    ** null</c>
+<l>    tuple_substr (JsonString, Index, Index + 3, Substring)</l>
+<l>    if(Substring == 'null')</l>
+<l>        Index := Index + 3 + 1</l>
+<l>        Value := 'null'</l>
+<l>    else</l>
+<l>        throw('Json 格式错误')</l>
+<l>    endif</l>
+<l>else</l>
+<l>    throw('Json 格式错误')</l>
+<l>endif</l>
+<l>IndexOut := Index</l>
+<c></c>
+<l>return ()</l>
+</body>
+<docu id="j_parse_values">
+<parameters>
+<parameter id="CharStream"/>
+<parameter id="Index"/>
+<parameter id="IndexOut"/>
+<parameter id="JsonString"/>
+<parameter id="Value"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="j_parse_obj">
+<interface>
+<ic>
+<par name="JsonString" base_type="ctrl" dimension="0"/>
+<par name="CharStream" base_type="ctrl" dimension="0"/>
+<par name="Index" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="Keys" base_type="ctrl" dimension="0"/>
+<par name="Values" base_type="ctrl" dimension="0"/>
+<par name="IndexOut" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<c>** 跳过左侧大括号</c>
+<l>Index := Index + 1</l>
+<c></c>
+<l>Keys := []</l>
+<l>Values := []</l>
+<l>while (true)</l>
+<l>    skip_whitespace (CharStream, Index, Index)</l>
+<c>   </c>
+<l>    if(CharStream[Index] == '"')</l>
+<c>           ** 解析Key</c>
+<l>        j_parse_string (JsonString, CharStream, Index, Key, Index)</l>
+<l>        Keys := [Keys, Key]</l>
+<c>        </c>
+<c>        ** 解析values</c>
+<l>        j_parse_values (JsonString, CharStream, Index, Value, Index)</l>
+<l>        Values := [Values, Value]      </l>
+<l>    endif</l>
+<c>     </c>
+<c>    * 跳过逗号</c>
+<l>    if (CharStream[Index] == ',')</l>
+<l>        Index := Index + 1</l>
+<l>    endif</l>
+<c>      </c>
+<c>    * 右侧大括号，中断</c>
+<l>    if (CharStream[Index] == '}')</l>
+<l>        break</l>
+<l>    endif    </l>
+<l>endwhile</l>
+<c></c>
+<l>IndexOut := Index + 1</l>
+<l>return ()</l>
+</body>
+<docu id="j_parse_obj">
+<parameters>
+<parameter id="CharStream"/>
+<parameter id="Index"/>
+<parameter id="IndexOut"/>
+<parameter id="JsonString"/>
+<parameter id="Keys"/>
+<parameter id="Values"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="read_json_file">
+<interface>
+<ic>
+<par name="FileName" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="JsonString" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>file_exists (FileName, IsExist)</l>
+<l>if(IsExist == 0)</l>
+<l>    throw('未能找到此文件 ' + FileName)</l>
+<l>endif</l>
+<c></c>
+<l>open_file (FileName, 'input', FileHandle)</l>
+<c></c>
+<l>IsEof := 0</l>
+<l>JsonString := ''</l>
+<l>while (IsEof = 0)</l>
+<l>    fread_string (FileHandle, OutStr, IsEof)</l>
+<l>    if(IsEof = 0)</l>
+<l>        JsonString := JsonString + OutStr</l>
+<l>    endif</l>
+<l>endwhile</l>
+<l>close_file(FileHandle)</l>
+<l>return ()</l>
+</body>
+<docu id="read_json_file">
+<parameters>
+<parameter id="FileName"/>
+<parameter id="JsonString"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="json_parse">
+<interface>
+<ic>
+<par name="JsonString" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="Keys" base_type="ctrl" dimension="0"/>
+<par name="Values" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<c>** 字符流</c>
+<l>json_str_to_char_stream (JsonString, CharStream)</l>
+<c>** 跳过空白</c>
+<l>skip_whitespace (CharStream, 0, Index)</l>
+<c></c>
+<c>** ParseObject</c>
+<l>if(CharStream[Index] == '{') </l>
+<l>    j_parse_obj (JsonString, CharStream, Index, Keys, Values, Index)       </l>
+<l>endif</l>
+<l>return ()</l>
+</body>
+<docu id="json_parse">
+<parameters>
+<parameter id="JsonString"/>
+<parameter id="Keys"/>
+<parameter id="Values"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="get_j_value">
+<interface>
+<ic>
+<par name="Keys" base_type="ctrl" dimension="0"/>
+<par name="Values" base_type="ctrl" dimension="0"/>
+<par name="Key" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="K" base_type="ctrl" dimension="0"/>
+<par name="V" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>tuple_find (Keys, Key, Index)</l>
+<l>if(Index == -1)</l>
+<l>    throw('')</l>
+<l>endif</l>
+<l>tuple_select (Values, Index, SelectedValue)</l>
+<c></c>
+<l>tuple_type (SelectedValue, Type)</l>
+<l>if(Type == 1 )</l>
+<l>    if(SelectedValue - 59500000 &gt; 0)</l>
+<c>        ** 此时为Message Handle</c>
+<l>        get_message_tuple (SelectedValue, 'Key', K)</l>
+<l>        get_message_tuple (SelectedValue, 'Value', V)</l>
+<l>    else</l>
+<l>        K := Key</l>
+<l>        V := SelectedValue</l>
+<l>    endif</l>
+<l>else</l>
+<l>    K := Key</l>
+<l>    V := SelectedValue</l>
+<l>endif</l>
+<l>return ()</l>
+</body>
+<docu id="get_j_value">
+<parameters>
+<parameter id="K"/>
+<parameter id="Key"/>
+<parameter id="Keys"/>
+<parameter id="V"/>
+<parameter id="Values"/>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>

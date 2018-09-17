@@ -1,0 +1,56 @@
+{
+    "Camera":{
+        "Name":"DALSA Camera",
+        "Catlog":"Camera",
+
+        "Input":{
+            "CameraName":{
+                "Type":"String",
+                "Dimension":0,
+                "Enum": null,
+                "Default":"CameraX",
+                "Comment":"Name Camera"
+            },
+
+            "DeviceIndex":{
+                "Type":"Int",
+                "Dimension":0,
+                "Enum":{
+                    "Value1":1,
+                    "Value2":2
+                },
+                "Default":1,
+                "Comment":"Camera Index"
+            }
+        },  
+        
+        "Output":{
+      
+        }
+    },
+
+    "Inspector":{
+        "Name":"Inspector",
+        "Catlog":"Defect Inspect",
+
+        "Input":{
+            "EngineFile":{
+                "Type":"String",
+                "Dimension":1,
+                "Enum":null,
+                "Default":"dwc",
+                "Comment":""
+            }      
+        }
+    },
+
+    "Converter":{
+        "Name":"Converter",
+        "Catlog":"Convert Image",
+     
+        "Input":{
+
+        }
+    }
+}
+
