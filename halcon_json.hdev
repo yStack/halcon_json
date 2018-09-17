@@ -4,8 +4,9 @@
 <interface/>
 <body>
 <c>** HALCON JSON PARSER</c>
-<c>*** 1. 暂不出支持json格式中的数组 ***</c>
-<c>*** 2. 中文有乱码 ***</c>
+<c>*** 1. 暂不出支持json格式中的数组</c>
+<c>*** 2. 中文有乱码</c>
+<c>*** 3. 有read, 暂没有write功能</c>
 <c></c>
 <l>FileName := './data.json'</l>
 <l>read_json_file (FileName, JsonString)</l>
@@ -13,17 +14,28 @@
 <l>json_parse (JsonString, Keys, Values)</l>
 <c></c>
 <c></c>
-<l>Key := 'Camera'</l>
+<l>file_exists (FileName, IsExist)</l>
+<l>if(IsExist == 0)</l>
+<l>    throw('未能找到此文件 ' + FileName)</l>
+<l>endif</l>
+<c></c>
+<c></c>
+<c></c>
+<c></c>
+<c></c>
+<c></c>
+<c></c>
+<l>* Key := 'Camera'</l>
 <c>** get VALUE by KEY </c>
-<l>get_j_value (Keys, Values, Key, Key1, Value1)</l>
+<l>* get_j_value (Keys, Values, Key, Key1, Value1)</l>
 <c></c>
 <c>** keys-values</c>
-<l>get_j_value (Key1, Value1, 'Input', k2, v2) </l>
+<l>* get_j_value (Key1, Value1, 'Input', k2, v2) </l>
 <c></c>
-<l>get_j_value (k2, v2, 'CameraName', k30, v30)</l>
+<l>* get_j_value (k2, v2, 'CameraName', k30, v30)</l>
 <c></c>
 <c>** key-value</c>
-<l>get_j_value (k30, v30, 'Dimension', k31, v31)</l>
+<l>* get_j_value (k30, v30, 'Dimension', k31, v31)</l>
 <c></c>
 <c></c>
 </body>
@@ -431,7 +443,7 @@
 <l>IsEof := 0</l>
 <l>JsonString := ''</l>
 <l>while (IsEof = 0)</l>
-<l>    fread_string (FileHandle, OutStr, IsEof)</l>
+<l>    fread_line (FileHandle, OutStr, IsEof)</l>
 <l>    if(IsEof = 0)</l>
 <l>        JsonString := JsonString + OutStr</l>
 <l>    endif</l>
@@ -491,7 +503,7 @@
 <body>
 <l>tuple_find (Keys, Key, Index)</l>
 <l>if(Index == -1)</l>
-<l>    throw('')</l>
+<l>    throw('没有找到Key')</l>
 <l>endif</l>
 <l>tuple_select (Values, Index, SelectedValue)</l>
 <c></c>
